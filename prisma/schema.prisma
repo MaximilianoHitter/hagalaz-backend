@@ -8,4 +8,64 @@ datasource db {
   provider = "postgresql"
 }
 
+model user {
+  id                      String @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  email                   String @unique
+  first_name              String
+  last_name               String
+  password_hash           String @db.Text
+  public_key              String @db.Text
+  encrypted_private_key   String @db.Text
+  private_key_iv          String @db.Text
+  private_key_auth_tag    String @db.Text
+  failed_loggin_attempts  Int @default(0)
+  account_locked_until    DateTime?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  sessions                sessions[]
+  entries                 entries[]
+
+  @@index([email])
+  @@map("USERS")
+}
+
+model sessions {
+  id                      String @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  id_user                 String @db.Uuid
+  token_hash              String @db.Text
+  fingerprint_hash        String @db.Text
+  ip_address              String
+  user_agent              String @db.Text
+  created_at              DateTime @default(now())
+  expires_at              DateTime
+  revoked_at              DateTime?
+
+  user                    user @relation(fields:[id_user], references:[id])
+
+  @@index([id_user])
+  @@index([token_hash])
+  @@index([fingerprint_hash])
+  @@index([ip_address])
+  @@index([user_agent])
+  @@map("SESSIONS")
+}
+
+model entries {
+  id                      String @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  id_user                 String @db.Uuid
+  title                   String
+  encrypted_data_key      String @db.Text
+  cipher_text             String @db.Text
+  iv                      String @db.Text
+  auth_tag                String @db.Text
+  created_at              DateTime @default(now())
+
+  user                    user @relation(fields:[id_user], references:[id])
+
+  @@index([id_user])
+  @@index([title])
+  @@map("ENTRIES")
+}
+
 
