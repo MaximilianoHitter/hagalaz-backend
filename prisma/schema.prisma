@@ -14,17 +14,17 @@ model user {
   first_name              String
   last_name               String
   password_hash           String @db.Text
-  public_key              String @db.Text
-  encrypted_private_key   String @db.Text
-  private_key_iv          String @db.Text
-  private_key_auth_tag    String @db.Text
+  api_secret_encrypted    String @db.Text
+  api_secret_iv           String @db.Text
+  api_secret_auth_tag     String @db.Text
   failed_loggin_attempts  Int @default(0)
-  account_locked_until    DateTime?
+  last_login_at           DateTime
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
 
   sessions                sessions[]
-  entries                 entries[]
+  requestnonces           requestnonces[]
+  auditlogs               auditlogs[]
 
   @@index([email])
   @@map("USERS")
@@ -35,10 +35,13 @@ model sessions {
   id_user                 String @db.Uuid
   token_hash              String @db.Text
   fingerprint_hash        String @db.Text
-  ip_address              String
+  login_ip                String
   user_agent              String @db.Text
   created_at              DateTime @default(now())
   expires_at              DateTime
+  last_activity_at        DateTime
+  revoked                 Boolean @default(false)
+  revoked_reason          String @db.Text
   revoked_at              DateTime?
 
   user                    user @relation(fields:[id_user], references:[id])
@@ -46,26 +49,39 @@ model sessions {
   @@index([id_user])
   @@index([token_hash])
   @@index([fingerprint_hash])
-  @@index([ip_address])
+  @@index([login_ip])
   @@index([user_agent])
   @@map("SESSIONS")
 }
 
-model entries {
-  id                      String @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
-  id_user                 String @db.Uuid
-  title                   String
-  encrypted_data_key      String @db.Text
-  cipher_text             String @db.Text
-  iv                      String @db.Text
-  auth_tag                String @db.Text
-  created_at              DateTime @default(now())
+model requestnonces {
+  id                    String @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  id_user               String @db.Uuid
+  nonce                 String @db.Text @unique
+  timestamp             DateTime
+  created_at            DateTime
 
-  user                    user @relation(fields:[id_user], references:[id])
+  user                  user @relation(fields:[id_user], references:[id])
 
   @@index([id_user])
-  @@index([title])
-  @@map("ENTRIES")
+  @@index([nonce])
+  @@map("REQUEST_NONCES")
+}
+
+model auditlogs {
+  id                    String @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  id_user               String @db.Uuid
+  action                String @db.Text
+  ip_address            String @db.Text
+  user_agent            String @db.Text
+  metadata              Json
+  created_at            DateTime @default(now())
+
+  user                  user @relation(fields:[id_user], references:[id])
+
+  @@index([id_user])
+  @@index([action])
+  @@map("AUDIT_LOGS")
 }
 
 

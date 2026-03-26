@@ -5,12 +5,11 @@ CREATE TABLE "USERS" (
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
-    "public_key" TEXT NOT NULL,
-    "encrypted_private_key" TEXT NOT NULL,
-    "private_key_iv" TEXT NOT NULL,
-    "private_key_auth_tag" TEXT NOT NULL,
+    "api_secret_encrypted" TEXT NOT NULL,
+    "api_secret_iv" TEXT NOT NULL,
+    "api_secret_auth_tag" TEXT NOT NULL,
     "failed_loggin_attempts" INTEGER NOT NULL DEFAULT 0,
-    "account_locked_until" TIMESTAMP(3),
+    "last_login_at" TIMESTAMP(3) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -23,27 +22,40 @@ CREATE TABLE "SESSIONS" (
     "id_user" UUID NOT NULL,
     "token_hash" TEXT NOT NULL,
     "fingerprint_hash" TEXT NOT NULL,
-    "ip_address" TEXT NOT NULL,
+    "login_ip" TEXT NOT NULL,
     "user_agent" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "expires_at" TIMESTAMP(3) NOT NULL,
+    "last_activity_at" TIMESTAMP(3) NOT NULL,
+    "revoked" BOOLEAN NOT NULL DEFAULT false,
+    "revoked_reason" TEXT NOT NULL,
     "revoked_at" TIMESTAMP(3),
 
     CONSTRAINT "SESSIONS_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "ENTRIES" (
+CREATE TABLE "REQUEST_NONCES" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "id_user" UUID NOT NULL,
-    "title" TEXT NOT NULL,
-    "encrypted_data_key" TEXT NOT NULL,
-    "cipher_text" TEXT NOT NULL,
-    "iv" TEXT NOT NULL,
-    "auth_tag" TEXT NOT NULL,
+    "nonce" TEXT NOT NULL,
+    "timestamp" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "REQUEST_NONCES_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AUDIT_LOGS" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "id_user" UUID NOT NULL,
+    "action" TEXT NOT NULL,
+    "ip_address" TEXT NOT NULL,
+    "user_agent" TEXT NOT NULL,
+    "metadata" JSONB NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "ENTRIES_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "AUDIT_LOGS_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -62,19 +74,31 @@ CREATE INDEX "SESSIONS_token_hash_idx" ON "SESSIONS"("token_hash");
 CREATE INDEX "SESSIONS_fingerprint_hash_idx" ON "SESSIONS"("fingerprint_hash");
 
 -- CreateIndex
-CREATE INDEX "SESSIONS_ip_address_idx" ON "SESSIONS"("ip_address");
+CREATE INDEX "SESSIONS_login_ip_idx" ON "SESSIONS"("login_ip");
 
 -- CreateIndex
 CREATE INDEX "SESSIONS_user_agent_idx" ON "SESSIONS"("user_agent");
 
 -- CreateIndex
-CREATE INDEX "ENTRIES_id_user_idx" ON "ENTRIES"("id_user");
+CREATE UNIQUE INDEX "REQUEST_NONCES_nonce_key" ON "REQUEST_NONCES"("nonce");
 
 -- CreateIndex
-CREATE INDEX "ENTRIES_title_idx" ON "ENTRIES"("title");
+CREATE INDEX "REQUEST_NONCES_id_user_idx" ON "REQUEST_NONCES"("id_user");
+
+-- CreateIndex
+CREATE INDEX "REQUEST_NONCES_nonce_idx" ON "REQUEST_NONCES"("nonce");
+
+-- CreateIndex
+CREATE INDEX "AUDIT_LOGS_id_user_idx" ON "AUDIT_LOGS"("id_user");
+
+-- CreateIndex
+CREATE INDEX "AUDIT_LOGS_action_idx" ON "AUDIT_LOGS"("action");
 
 -- AddForeignKey
 ALTER TABLE "SESSIONS" ADD CONSTRAINT "SESSIONS_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "USERS"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ENTRIES" ADD CONSTRAINT "ENTRIES_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "USERS"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "REQUEST_NONCES" ADD CONSTRAINT "REQUEST_NONCES_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "USERS"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AUDIT_LOGS" ADD CONSTRAINT "AUDIT_LOGS_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "USERS"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
