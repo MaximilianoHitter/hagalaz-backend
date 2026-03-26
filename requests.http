@@ -1,1 +1,13 @@
 GET http://localhost:3000/api/health
+
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+X-Timestamp: 1774524634019
+X-Nonce: 55fcad8e-fa49-4a0b-90fa-11f7564b02e6
+{
+    "email":"juan@juan.com",
+    "password":"admin123",
+    "first_name":"Juan",
+    "last_name":"Palote"
+    "fingerprint_hash": "42e09989da1d2f659e998c74b38b0c440c94de8591ea90634031a0c98a26284b"
+}

@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     CryptModule,
     PrismaModule,
-    HealthModule
+    HealthModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [
