@@ -18,6 +18,9 @@ const timestamp = Date.now().toString();
 
 const nonce = crypto.randomUUID();
 
+const master_key = crypto.createHash('sha256').update('HAGALAZ').digest('hex');
+
 console.log('Fingerprint', fingerprintHash);
 console.log('Timestamp', timestamp);
 console.log('Nonce', nonce);
+console.log('MasterKey', master_key);

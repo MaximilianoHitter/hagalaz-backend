@@ -5,6 +5,7 @@ import { SymmetricService } from './symmetric.service';
 
 @Module({
   providers: [CryptService, SymmetricService],
-  controllers: [CryptController]
+  controllers: [CryptController],
+  exports: [CryptService, SymmetricService]
 })
 export class CryptModule { }
