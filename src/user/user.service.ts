@@ -15,6 +15,16 @@ export class UserService {
         return exists;
     }
 
+    async getUser(email: string) {
+        const exists = await this.db.user.findFirst({
+            where: {
+                email: email
+            }
+        })
+        if (!exists) throw new BadRequestException('Invalid credential')
+        return exists
+    }
+
     async create(data: any) {
         const user = await this.db.user.create({
             data: {
@@ -30,5 +40,40 @@ export class UserService {
             }
         })
         return user;
+    }
+
+    async incrementFailAttemps(id_user: string) {
+        await this.db.user.update({
+            where: {
+                id: id_user
+            },
+            data: {
+                failed_loggin_attempts: {
+                    increment: 1
+                }
+            }
+        });
+    }
+
+    async resetFailAttempts(id_user: string) {
+        await this.db.user.update({
+            where: {
+                id: id_user
+            },
+            data: {
+                failed_loggin_attempts: 0
+            }
+        });
+    }
+
+    async blockUser(id_user: string) {
+        await this.db.user.update({
+            data: {
+                bloqued: true
+            },
+            where: {
+                id: id_user
+            }
+        })
     }
 }

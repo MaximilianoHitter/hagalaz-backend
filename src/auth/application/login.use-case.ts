@@ -1,25 +1,21 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { LoginDto } from "../dto/request/login.dto";
 import { AuthService } from "../auth.service";
-import { RegisterDto } from "../dto/request/register.dto";
 import { UserService } from "src/user/user.service";
 import { CryptService } from "src/crypt/crypt.service";
-import { ConfigService } from "@nestjs/config";
-import { SymmetricService } from "src/crypt/symmetric.service";
 import { SessionService } from "../session.service";
 
 @Injectable()
-export class RegisterUseCase {
+export class LoginUseCase {
     constructor(
         private readonly authService: AuthService,
         private readonly userService: UserService,
         private readonly cryptService: CryptService,
-        private readonly configService: ConfigService,
-        private readonly symmetricService: SymmetricService,
         private readonly sessionService: SessionService
     ) { }
 
     async execute(
-        data: RegisterDto,
+        data: LoginDto,
         timestamp: number,
         nonce: string,
         ip: string,
@@ -27,28 +23,23 @@ export class RegisterUseCase {
     ) {
         await this.authService.validateTimestamp(timestamp);
         await this.authService.validateNonce(nonce);
-        await this.userService.validateExists(data.email);
-        //Hash password
-        const password_hash = await this.cryptService.createPasswordHash(data.password);
-        //Create api secret
-        const api_secret = await this.cryptService.createApiSecret(32);
-        //Cipher api secret
-        const master_secret = await this.configService.get<string>('BACKEND_MASTER_KEY');
-        if (!master_secret) throw new BadRequestException('Secret didnt found');
-        const master_secret_buffer = Buffer.from(master_secret, 'hex');
-        const iv = await this.cryptService.createApiSecret(12);
-        const { encrypted, tag } = await this.symmetricService.cipher(api_secret, iv, master_secret_buffer);
-        //Create user
-        const user = await this.userService.create({
-            email: data.email,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            password_hash: password_hash,
-            api_secret_encrypted: encrypted.toString('hex'),
-            api_secret_iv: iv.toString('hex'),
-            api_secret_auth_tag: tag.toString('hex')
-        });
-        //Create session
+        const user = await this.userService.getUser(data.email);
+        if (user.failed_loggin_attempts >= 3) {
+            //Block user
+            await this.userService.blockUser(user.id);
+            throw new BadRequestException('User blocked, too many fail attempts');
+        }
+        const valid_password = await this.cryptService.validatePassword(data.password, user.password_hash);
+        if (!valid_password) {
+            //Increment fail attempts
+            await this.userService.incrementFailAttemps(user.id);
+            throw new BadRequestException('Invalid credentials')
+        }
+        //Reset fail attempts
+        await this.userService.resetFailAttempts(user.id);
+        //Revoke old sessions
+        await this.sessionService.revokePrevoiusSesions(user.id);
+        //Create new session
         const session_token = (await this.cryptService.createApiSecret(32)).toString('hex');
         const token_hash = await this.cryptService.getHash(session_token);
         const session = await this.sessionService.create({
@@ -73,7 +64,6 @@ export class RegisterUseCase {
         return {
             user, token, token_hash
         }
-
 
     }
 }

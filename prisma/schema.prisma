@@ -21,6 +21,7 @@ model user {
   last_login_at           DateTime
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
+  bloqued                 Boolean @default(false)
 
   sessions                sessions[]
   requestnonces           requestnonces[]

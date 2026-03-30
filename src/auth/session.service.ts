@@ -24,6 +24,22 @@ export class SessionService {
     }
 
     async revokePrevoiusSesions(id_user: string) {
-
+        const previous = await this.db.sessions.findFirst({
+            where: {
+                id_user: id_user, revoked: false
+            }
+        });
+        if (previous) {
+            await this.db.sessions.update({
+                where: {
+                    id: previous.id
+                },
+                data: {
+                    revoked: true,
+                    revoked_reason: 'new_login',
+                    revoked_at: new Date()
+                }
+            })
+        }
     }
 }

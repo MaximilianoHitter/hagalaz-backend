@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "USERS" ADD COLUMN     "bloqued" BOOLEAN NOT NULL DEFAULT false;

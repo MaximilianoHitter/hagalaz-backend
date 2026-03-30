@@ -8,6 +8,10 @@ export class CryptService {
         return await argon.hash(password);
     }
 
+    async validatePassword(password: string, password_hash: string): Promise<boolean> {
+        return await argon.verify(password_hash, password);
+    }
+
     async createApiSecret(qty: number) {
         return crypto.randomBytes(qty);
     }

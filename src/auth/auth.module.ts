@@ -9,6 +9,7 @@ import { UserModule } from 'src/user/user.module';
 import { CryptModule } from 'src/crypt/crypt.module';
 import { SessionService } from './session.service';
 import { RegisterUseCase } from './application/register.use-case';
+import { LoginUseCase } from './application/login.use-case';
 
 @Module({
   imports: [
@@ -26,6 +27,6 @@ import { RegisterUseCase } from './application/register.use-case';
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SessionService, RegisterUseCase]
+  providers: [AuthService, SessionService, RegisterUseCase, LoginUseCase]
 })
 export class AuthModule { }

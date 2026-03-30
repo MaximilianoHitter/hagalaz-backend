@@ -2,7 +2,7 @@ GET http://localhost:3000/api/health
 
 POST http://localhost:3000/api/auth/register
 Content-Type: application/json
-X-Timestamp: 1774707715141
+X-Timestamp: 1774710676170
 X-Nonce: 18302ea4-1396-4f93-827d-b38d5f5d2ccc
 X-Forwarded-for: 192.168.0.1
 User-Agent: Pepito
@@ -12,5 +12,18 @@ User-Agent: Pepito
     "password":"admin123",
     "first_name":"Juan",
     "last_name":"Palote",
+    "fingerprint_hash": "42e09989da1d2f659e998c74b38b0c440c94de8591ea90634031a0c98a26284b"
+}
+
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+X-Timestamp: 1774710952864
+X-Nonce: 2ea4daad-21d9-49cf-a0cd-a715d6268115
+X-Forwarded-for: 192.168.0.1
+User-Agent: Pepito
+
+{
+    "email":"juan@juan.com",
+    "password":"admin123",
     "fingerprint_hash": "42e09989da1d2f659e998c74b38b0c440c94de8591ea90634031a0c98a26284b"
 }
